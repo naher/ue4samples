@@ -1,5 +1,8 @@
 // Copyright 1998-2015 Epic Games, Inc. All Rights Reserved.
 #pragma once
+
+#include "Weapon.h"
+
 #include "GameFramework/Character.h"
 #include "BatteriesCppCharacter.generated.h"
 
@@ -20,13 +23,24 @@ class ABatteriesCppCharacter : public ACharacter
     UFUNCTION(BlueprintCallable, Category = Power)
     void CollectBatteries();
 
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    void CollectWeapon();
+
+public:
+    //handles firing
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    void OnFire();
+
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    bool CanFire();
+
 
 public:
 	ABatteriesCppCharacter(const FObjectInitializer& ObjectInitializer);
 
     //Called by CollectBatteries() to use the Blueprinted PowerUp functionality
     UFUNCTION(BlueprintImplementableEvent, Category = Power)
-        void PowerUp(float BatteryPower);
+    void PowerUp(float BatteryPower);
 
     //Collection Volume
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Power)
@@ -34,15 +48,15 @@ public:
 
     //PowerLevel of our character
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Power)
-        float PowerLevel;
+    float PowerLevel;
 
     //Power multiplier for the speed of the character
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Power)
-        float SpeedFactor;
+    float SpeedFactor;
 
     //Baseline speed of the character
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Power)
-        float BaseSpeed;
+    float BaseSpeed;
 
     virtual void Tick(float DeltaSeconds) override;
 
@@ -53,6 +67,9 @@ public:
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
+
+    UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = Weapon)
+    AWeapon * Weapon;
 
 protected:
 

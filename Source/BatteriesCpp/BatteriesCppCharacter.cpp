@@ -65,6 +65,9 @@ void ABatteriesCppCharacter::SetupPlayerInputComponent(class UInputComponent* In
 	InputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	InputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
     InputComponent->BindAction("CollectPickups", IE_Pressed, this, &ABatteriesCppCharacter::CollectBatteries);
+    InputComponent->BindAction("CollectWeapon", IE_Pressed, this, &ABatteriesCppCharacter::CollectWeapon);
+
+    InputComponent->BindAction("Fire", IE_Pressed, this, &ABatteriesCppCharacter::OnFire);
 
 	InputComponent->BindAxis("MoveForward", this, &ABatteriesCppCharacter::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &ABatteriesCppCharacter::MoveRight);
@@ -186,4 +189,55 @@ void ABatteriesCppCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     CharacterMovement->MaxWalkSpeed = SpeedFactor*PowerLevel + BaseSpeed;
+}
+
+void ABatteriesCppCharacter::CollectWeapon()
+{
+    ABatteriesCppGameMode* MyGameMode = Cast<ABatteriesCppGameMode>(UGameplayStatics::GetGameMode(this));
+    if (MyGameMode->GetCurrentState() != EPickupBatteryPlayState::EPlaying)
+        return;
+
+    // get all overlapping actors and store them in a CollectedActors array
+    TArray<AActor*> CollectedActors;
+    CollectionSphere->GetOverlappingActors(CollectedActors);
+
+    for (int32 iCollected = 0; iCollected < CollectedActors.Num(); ++iCollected)
+    {
+        AWeapon* const aWeapon = Cast<AWeapon>(CollectedActors[iCollected]);
+
+        if (aWeapon && !aWeapon->IsPendingKill() && aWeapon->bIsPickupActive)
+        {
+            if (Weapon) {
+                Weapon->WeaponMesh->SetSimulatePhysics(true);
+                Weapon->WeaponMesh->AttachTo(aWeapon->GetRootComponent());
+                Weapon->DetachRootComponentFromParent();
+                Weapon->bIsPickupActive = true;
+            }
+
+            Weapon = aWeapon;
+            Weapon->bIsPickupActive = false;
+            Weapon->OnPickedUp(this);
+
+            FName HandR01SocketName("handRSocket01");
+            Weapon->AttachRootComponentToActor(this, HandR01SocketName, EAttachLocation::SnapToTarget);
+            Weapon->WeaponMesh->SetSimulatePhysics(false);
+            Weapon->WeaponMesh->AttachTo(GetMesh(), HandR01SocketName, EAttachLocation::SnapToTarget);
+
+            break;
+        }
+    }
+}
+
+
+bool ABatteriesCppCharacter::CanFire()
+{
+    return Weapon != NULL;
+}
+
+void ABatteriesCppCharacter::OnFire()
+{
+    if (Weapon)
+    {
+        Weapon->OnFire();
+    }
 }
